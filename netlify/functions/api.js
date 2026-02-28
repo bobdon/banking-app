@@ -1,3 +1,4 @@
+const path = require('path');
 const serverless = require('serverless-http');
 const initSqlJs = require('sql.js');
 const { initSchema } = require('../../server/src/db/schema');
@@ -16,7 +17,9 @@ function init() {
   if (handlerPromise) return handlerPromise;
 
   handlerPromise = (async () => {
-    const SQL = await initSqlJs();
+    const SQL = await initSqlJs({
+      locateFile: file => path.join(__dirname, file),
+    });
     const db = new SQL.Database();
     db.run('PRAGMA foreign_keys = ON');
     initSchema(db);
