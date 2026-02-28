@@ -1,4 +1,16 @@
 import { useState, useEffect } from 'react';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Typography from '@mui/material/Typography';
+import Chip from '@mui/material/Chip';
+import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
+import Alert from '@mui/material/Alert';
+import CircularProgress from '@mui/material/CircularProgress';
+import TextField from '@mui/material/TextField';
+import MenuItem from '@mui/material/MenuItem';
+import Divider from '@mui/material/Divider';
 import { apiFetch, formatCurrency, formatDate } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -54,9 +66,7 @@ export default function ActivityFeed() {
     setProcessing(true);
     setActionMsg('');
     try {
-      const data = await apiFetch(`/api/belev/${transferId}/decline`, {
-        body: {},
-      });
+      const data = await apiFetch(`/api/belev/${transferId}/decline`, { body: {} });
       setActionMsg(data.message);
       await loadActivity();
     } catch (err) {
@@ -66,163 +76,149 @@ export default function ActivityFeed() {
     }
   }
 
-  function getStatusBadge(status) {
-    const styles = {
-      completed: 'bg-emerald-100 text-emerald-700',
-      pending: 'bg-amber-100 text-amber-700',
-      declined: 'bg-red-100 text-red-700',
-      cancelled: 'bg-gray-100 text-gray-500',
-    };
-    return (
-      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${styles[status] || styles.cancelled}`}>
-        {status}
-      </span>
-    );
-  }
+  const statusColors = {
+    completed: 'success',
+    pending: 'warning',
+    declined: 'error',
+    cancelled: 'default',
+  };
 
   function getDescription(item) {
     const isSender = item.sender_id === user.id;
-
     if (item.type === 'send') {
-      if (isSender) {
-        return `Sent to ${item.recipient_first_name} ${item.recipient_last_name}`;
-      }
-      return `Received from ${item.sender_first_name} ${item.sender_last_name}`;
+      return isSender
+        ? `Sent to ${item.recipient_first_name} ${item.recipient_last_name}`
+        : `Received from ${item.sender_first_name} ${item.sender_last_name}`;
     }
-
-    // type === 'request'
-    if (isSender) {
-      return `Requested from ${item.recipient_first_name} ${item.recipient_last_name}`;
-    }
-    return `${item.sender_first_name} ${item.sender_last_name} requested`;
+    return isSender
+      ? `Requested from ${item.recipient_first_name} ${item.recipient_last_name}`
+      : `${item.sender_first_name} ${item.sender_last_name} requested`;
   }
 
   function getAmountColor(item) {
     const isSender = item.sender_id === user.id;
-    if (item.type === 'send') {
-      return isSender ? 'text-red-600' : 'text-emerald-600';
-    }
-    // For requests, show color only if completed
-    if (item.status === 'completed') {
-      return isSender ? 'text-emerald-600' : 'text-red-600';
-    }
-    return 'text-gray-600';
+    if (item.type === 'send') return isSender ? 'error.main' : 'success.main';
+    if (item.status === 'completed') return isSender ? 'success.main' : 'error.main';
+    return 'text.secondary';
   }
 
   function getAmountPrefix(item) {
     const isSender = item.sender_id === user.id;
-    if (item.type === 'send') {
-      return isSender ? '- ' : '+ ';
-    }
-    if (item.status === 'completed') {
-      return isSender ? '+ ' : '- ';
-    }
+    if (item.type === 'send') return isSender ? '- ' : '+ ';
+    if (item.status === 'completed') return isSender ? '+ ' : '- ';
     return '';
   }
 
   if (loading) {
     return (
-      <div className="flex justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600"></div>
-      </div>
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+        <CircularProgress color="secondary" />
+      </Box>
     );
   }
 
   return (
-    <div className="space-y-3">
-      {actionMsg && (
-        <div className="bg-violet-50 text-violet-700 p-3 rounded-lg text-sm">{actionMsg}</div>
-      )}
+    <Stack spacing={1.5}>
+      {actionMsg && <Alert severity="info">{actionMsg}</Alert>}
 
       {activity.length === 0 ? (
-        <p className="text-center py-8 text-gray-500">No BeLev activity yet. Send or request money to get started!</p>
+        <Typography variant="body2" color="text.disabled" sx={{ textAlign: 'center', py: 4 }}>
+          No BeLev activity yet. Send or request money to get started!
+        </Typography>
       ) : (
         activity.map(item => (
-          <div
-            key={item.id}
-            className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-3"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-gray-900 text-sm truncate">
-                    {getDescription(item)}
-                  </span>
-                  {getStatusBadge(item.status)}
-                </div>
-                {item.memo && (
-                  <p className="text-xs text-gray-500 truncate">"{item.memo}"</p>
-                )}
-                <p className="text-xs text-gray-400 mt-1">{formatDate(item.created_at)}</p>
-              </div>
-              <div className={`text-right font-semibold ${getAmountColor(item)}`}>
-                {getAmountPrefix(item)}{formatCurrency(item.amount)}
-              </div>
-            </div>
+          <Card variant="outlined" key={item.id}>
+            <CardContent sx={{ py: 2, '&:last-child': { pb: 2 } }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+                    <Typography variant="body2" fontWeight={600} noWrap>
+                      {getDescription(item)}
+                    </Typography>
+                    <Chip label={item.status} size="small" color={statusColors[item.status] || 'default'} />
+                  </Stack>
+                  {item.memo && (
+                    <Typography variant="caption" color="text.secondary" noWrap>
+                      "{item.memo}"
+                    </Typography>
+                  )}
+                  <Typography variant="caption" color="text.disabled" display="block" sx={{ mt: 0.5 }}>
+                    {formatDate(item.created_at)}
+                  </Typography>
+                </Box>
+                <Typography variant="body1" fontWeight={700} sx={{ color: getAmountColor(item), ml: 2 }}>
+                  {getAmountPrefix(item)}{formatCurrency(item.amount)}
+                </Typography>
+              </Stack>
 
-            {/* Accept/Decline actions for incoming pending requests */}
-            {item.type === 'request' &&
-             item.status === 'pending' &&
-             item.recipient_id === user.id && (
-              <div className="border-t border-gray-100 pt-3">
-                {acceptingId === item.id ? (
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={selectedAccountId}
-                      onChange={e => setSelectedAccountId(e.target.value)}
-                      className="flex-1 px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
-                    >
-                      {accounts.map(a => (
-                        <option key={a.id} value={a.id}>
-                          {a.name} ({formatCurrency(a.balance)})
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={() => handleAccept(item.id)}
-                      disabled={processing}
-                      className="px-3 py-1.5 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
-                    >
-                      {processing ? '...' : 'Pay'}
-                    </button>
-                    <button
-                      onClick={() => setAcceptingId(null)}
-                      className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setAcceptingId(item.id)}
-                      className="flex-1 px-3 py-1.5 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors"
-                    >
-                      Accept & Pay
-                    </button>
-                    <button
-                      onClick={() => handleDecline(item.id)}
-                      disabled={processing}
-                      className="flex-1 px-3 py-1.5 text-sm border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
-                    >
-                      Decline
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+              {/* Accept/Decline for incoming pending requests */}
+              {item.type === 'request' && item.status === 'pending' && item.recipient_id === user.id && (
+                <>
+                  <Divider sx={{ my: 1.5 }} />
+                  {acceptingId === item.id ? (
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <TextField
+                        select
+                        size="small"
+                        value={selectedAccountId}
+                        onChange={e => setSelectedAccountId(e.target.value)}
+                        sx={{ flex: 1 }}
+                      >
+                        {accounts.map(a => (
+                          <MenuItem key={a.id} value={String(a.id)}>
+                            {a.name} ({formatCurrency(a.balance)})
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color="success"
+                        onClick={() => handleAccept(item.id)}
+                        disabled={processing}
+                      >
+                        Pay
+                      </Button>
+                      <Button size="small" onClick={() => setAcceptingId(null)}>Cancel</Button>
+                    </Stack>
+                  ) : (
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color="secondary"
+                        fullWidth
+                        onClick={() => setAcceptingId(item.id)}
+                      >
+                        Accept & Pay
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        fullWidth
+                        onClick={() => handleDecline(item.id)}
+                        disabled={processing}
+                      >
+                        Decline
+                      </Button>
+                    </Stack>
+                  )}
+                </>
+              )}
 
-            {/* Pending outgoing request indicator */}
-            {item.type === 'request' &&
-             item.status === 'pending' &&
-             item.sender_id === user.id && (
-              <div className="border-t border-gray-100 pt-2">
-                <span className="text-xs text-amber-600 font-medium">Waiting for response...</span>
-              </div>
-            )}
-          </div>
+              {/* Pending outgoing */}
+              {item.type === 'request' && item.status === 'pending' && item.sender_id === user.id && (
+                <>
+                  <Divider sx={{ my: 1 }} />
+                  <Typography variant="caption" color="warning.main" fontWeight={600}>
+                    Waiting for response...
+                  </Typography>
+                </>
+              )}
+            </CardContent>
+          </Card>
         ))
       )}
-    </div>
+    </Stack>
   );
 }

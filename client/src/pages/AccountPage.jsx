@@ -1,6 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link as RouterLink } from 'react-router-dom';
 import { apiFetch, formatCurrency } from '../lib/api';
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import Chip from '@mui/material/Chip';
+import Grid from '@mui/material/Grid';
+import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
+import CircularProgress from '@mui/material/CircularProgress';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import TransactionList from '../components/TransactionList';
 import DepositWithdrawForm from '../components/DepositWithdrawForm';
 
@@ -18,64 +27,70 @@ export default function AccountPage() {
 
   useEffect(() => { loadAccount(); }, [loadAccount]);
 
-  function handleTransactionSuccess() {
+  function handleActionSuccess() {
     loadAccount();
     setRefreshKey(k => k + 1);
   }
 
   if (loading) {
     return (
-      <div className="flex justify-center py-16">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-      </div>
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
   if (!account) {
-    return <div className="text-center py-16 text-gray-400">Account not found</div>;
+    return <Typography color="error">Account not found.</Typography>;
   }
 
-  const masked = '****' + account.account_number.slice(-4);
-
   return (
-    <div>
-      <Link to="/dashboard" className="text-sm text-indigo-600 hover:text-indigo-500 mb-4 inline-block">
-        &larr; Back to Dashboard
-      </Link>
+    <Box>
+      <Button
+        component={RouterLink}
+        to="/dashboard"
+        startIcon={<ArrowBackIcon />}
+        size="small"
+        sx={{ mb: 2 }}
+      >
+        Back to Dashboard
+      </Button>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <div className="flex justify-between items-start mb-2">
+      <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1 }}>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">{account.name}</h1>
-            <p className="text-sm text-gray-400">{masked}</p>
+            <Typography variant="h5" fontWeight={700}>{account.name}</Typography>
+            <Typography variant="caption" color="text.disabled">
+              ****{account.account_number.slice(-4)}
+            </Typography>
           </div>
-          <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-            account.type === 'checking'
-              ? 'bg-blue-50 text-blue-700'
-              : 'bg-emerald-50 text-emerald-700'
-          }`}>
-            {account.type}
-          </span>
-        </div>
-        <p className="text-3xl font-bold text-gray-900 mt-4">{formatCurrency(account.balance)}</p>
-        <p className="text-sm text-gray-400">Available balance</p>
-      </div>
+          <Chip
+            label={account.type}
+            size="small"
+            color={account.type === 'checking' ? 'primary' : 'success'}
+            variant="outlined"
+          />
+        </Stack>
+        <Typography variant="h4" fontWeight={700} sx={{ mt: 2 }}>
+          {formatCurrency(account.balance)}
+        </Typography>
+        <Typography variant="caption" color="text.disabled">Available balance</Typography>
+      </Paper>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Transaction History</h2>
-            <TransactionList key={refreshKey} accountId={id} />
-          </div>
-        </div>
-
-        <div>
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-            <DepositWithdrawForm accountId={id} onSuccess={handleTransactionSuccess} />
-          </div>
-        </div>
-      </div>
-    </div>
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <Paper variant="outlined" sx={{ p: 3 }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>Transaction History</Typography>
+            <TransactionList accountId={id} refreshKey={refreshKey} />
+          </Paper>
+        </Grid>
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <Paper variant="outlined" sx={{ p: 3 }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>Quick Actions</Typography>
+            <DepositWithdrawForm accountId={id} onSuccess={handleActionSuccess} />
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
   );
 }

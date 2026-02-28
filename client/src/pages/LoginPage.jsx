@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import Alert from '@mui/material/Alert';
+import Link from '@mui/material/Link';
+import Stack from '@mui/material/Stack';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
 
@@ -26,62 +34,60 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <Logo size="lg" className="justify-center" />
-          <p className="mt-2 text-gray-500">Sign in to your account</p>
-        </div>
+    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default', px: 2 }}>
+      <Box sx={{ maxWidth: 420, width: '100%' }}>
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+            <Logo size="lg" />
+          </Box>
+          <Typography variant="body2" color="text.secondary">
+            Sign in to your account
+          </Typography>
+        </Box>
 
-        <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 space-y-6">
-          {error && (
-            <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">{error}</div>
-          )}
+        <Paper variant="outlined" sx={{ p: 4 }}>
+          <Stack component="form" onSubmit={handleSubmit} spacing={3}>
+            {error && <Alert severity="error">{error}</Alert>}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input
+            <TextField
+              label="Email address"
               type="email"
               required
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              placeholder="jane@example.com"
             />
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input
+            <TextField
+              label="Password"
               type="password"
               required
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              placeholder="password123"
             />
-          </div>
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-          >
-            {submitting ? 'Signing in...' : 'Sign in'}
-          </button>
+            <Button
+              type="submit"
+              variant="contained"
+              fullWidth
+              disabled={submitting}
+              size="large"
+            >
+              {submitting ? 'Signing in...' : 'Sign in'}
+            </Button>
+          </Stack>
+        </Paper>
 
-          <p className="text-center text-sm text-gray-500">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-indigo-600 font-medium hover:text-indigo-500">
-              Sign up
-            </Link>
-          </p>
-        </form>
+        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 3 }}>
+          Don't have an account?{' '}
+          <Link component={RouterLink} to="/register" underline="hover">
+            Sign up
+          </Link>
+        </Typography>
 
-        <p className="text-center text-xs text-gray-400">
-          Demo: jane@example.com / password123
-        </p>
-      </div>
-    </div>
+        <Typography variant="caption" color="text.disabled" sx={{ textAlign: 'center', display: 'block', mt: 2 }}>
+          Demo: jane@example.com / bob@example.com &bull; password123
+        </Typography>
+      </Box>
+    </Box>
   );
 }

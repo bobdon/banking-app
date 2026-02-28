@@ -1,94 +1,115 @@
 import { useState, useEffect } from 'react';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Chip from '@mui/material/Chip';
+import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
 import { apiFetch, formatCurrency, formatDate } from '../lib/api';
 
-export default function TransactionList({ accountId }) {
+export default function TransactionList({ accountId, refreshKey }) {
   const [transactions, setTransactions] = useState([]);
-  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
   const limit = 10;
 
   useEffect(() => {
-    setLoading(true);
     apiFetch(`/api/accounts/${accountId}/transactions?page=${page}&limit=${limit}`)
       .then(data => {
         setTransactions(data.transactions);
         setTotal(data.total);
-      })
-      .finally(() => setLoading(false));
-  }, [accountId, page]);
+      });
+  }, [accountId, page, refreshKey]);
 
-  const totalPages = Math.ceil(total / limit);
-
-  if (loading) {
-    return <div className="text-center py-8 text-gray-400">Loading transactions...</div>;
+  if (transactions.length === 0) {
+    return (
+      <Typography variant="body2" color="text.disabled" sx={{ textAlign: 'center', py: 4 }}>
+        No transactions yet.
+      </Typography>
+    );
   }
 
-  if (!transactions.length) {
-    return <div className="text-center py-8 text-gray-400">No transactions yet</div>;
-  }
+  const isCredit = type => type === 'deposit' || type === 'transfer_in';
 
   return (
-    <div>
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase">Date</th>
-              <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase">Description</th>
-              <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase">Type</th>
-              <th className="text-right py-3 px-4 text-xs font-medium text-gray-500 uppercase">Amount</th>
-              <th className="text-right py-3 px-4 text-xs font-medium text-gray-500 uppercase">Balance</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transactions.map(txn => {
-              const isCredit = txn.type === 'deposit' || txn.type === 'transfer_in';
-              return (
-                <tr key={txn.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-3 px-4 text-sm text-gray-500">{formatDate(txn.created_at)}</td>
-                  <td className="py-3 px-4 text-sm text-gray-900">{txn.description}</td>
-                  <td className="py-3 px-4">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                      isCredit ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
-                    }`}>
-                      {txn.type.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td className={`py-3 px-4 text-sm text-right font-medium ${
-                    isCredit ? 'text-emerald-600' : 'text-red-600'
-                  }`}>
-                    {isCredit ? '+' : '-'}{formatCurrency(txn.amount)}
-                  </td>
-                  <td className="py-3 px-4 text-sm text-right text-gray-500">
+    <Box>
+      <TableContainer>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Date</TableCell>
+              <TableCell>Description</TableCell>
+              <TableCell>Type</TableCell>
+              <TableCell align="right">Amount</TableCell>
+              <TableCell align="right">Balance</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {transactions.map(txn => (
+              <TableRow key={txn.id} hover>
+                <TableCell>
+                  <Typography variant="caption" color="text.secondary">{formatDate(txn.created_at)}</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2">{txn.description}</Typography>
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    label={txn.type.replace('_', ' ')}
+                    size="small"
+                    color={isCredit(txn.type) ? 'success' : 'error'}
+                    variant="outlined"
+                    sx={{ fontSize: '0.7rem' }}
+                  />
+                </TableCell>
+                <TableCell align="right">
+                  <Typography
+                    variant="body2"
+                    fontWeight={600}
+                    color={isCredit(txn.type) ? 'success.main' : 'error.main'}
+                  >
+                    {isCredit(txn.type) ? '+ ' : '- '}{formatCurrency(txn.amount)}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right">
+                  <Typography variant="body2" color="text.secondary">
                     {formatCurrency(txn.balance_after)}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-      {totalPages > 1 && (
-        <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
-          <button
+      {total > limit && (
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+          <Button
+            size="small"
+            variant="outlined"
+            disabled={page <= 1}
             onClick={() => setPage(p => p - 1)}
-            disabled={page === 1}
-            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg disabled:opacity-30 hover:bg-gray-50"
           >
             Previous
-          </button>
-          <span className="text-sm text-gray-500">Page {page} of {totalPages}</span>
-          <button
+          </Button>
+          <Typography variant="caption" color="text.secondary">
+            Page {page} of {Math.ceil(total / limit)}
+          </Typography>
+          <Button
+            size="small"
+            variant="outlined"
+            disabled={page * limit >= total}
             onClick={() => setPage(p => p + 1)}
-            disabled={page >= totalPages}
-            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg disabled:opacity-30 hover:bg-gray-50"
           >
             Next
-          </button>
-        </div>
+          </Button>
+        </Stack>
       )}
-    </div>
+    </Box>
   );
 }

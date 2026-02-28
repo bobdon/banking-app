@@ -1,4 +1,9 @@
 import { useState, useEffect } from 'react';
+import TextField from '@mui/material/TextField';
+import MenuItem from '@mui/material/MenuItem';
+import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
+import Stack from '@mui/material/Stack';
 import { apiFetch, formatCurrency } from '../lib/api';
 
 export default function SendMoneyForm() {
@@ -38,7 +43,6 @@ export default function SendMoneyForm() {
       setRecipientEmail('');
       setAmount('');
       setMemo('');
-      // Refresh balances
       const updated = await apiFetch('/api/accounts');
       setAccounts(updated.accounts);
     } catch (err) {
@@ -49,69 +53,58 @@ export default function SendMoneyForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      {error && <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">{error}</div>}
-      {success && <div className="bg-emerald-50 text-emerald-700 p-3 rounded-lg text-sm">{success}</div>}
+    <Stack component="form" onSubmit={handleSubmit} spacing={2.5}>
+      {error && <Alert severity="error">{error}</Alert>}
+      {success && <Alert severity="success">{success}</Alert>}
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Recipient email</label>
-        <input
-          type="email"
-          required
-          value={recipientEmail}
-          onChange={e => setRecipientEmail(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-          placeholder="friend@example.com"
-        />
-      </div>
+      <TextField
+        label="Recipient email"
+        type="email"
+        required
+        value={recipientEmail}
+        onChange={e => setRecipientEmail(e.target.value)}
+        placeholder="friend@example.com"
+      />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">From account</label>
-        <select
-          value={fromId}
-          onChange={e => setFromId(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-        >
-          {accounts.map(a => (
-            <option key={a.id} value={a.id}>
-              {a.name} ({formatCurrency(a.balance)})
-            </option>
-          ))}
-        </select>
-      </div>
+      <TextField
+        select
+        label="From account"
+        value={fromId}
+        onChange={e => setFromId(e.target.value)}
+      >
+        {accounts.map(a => (
+          <MenuItem key={a.id} value={String(a.id)}>
+            {a.name} ({formatCurrency(a.balance)})
+          </MenuItem>
+        ))}
+      </TextField>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Amount ($)</label>
-        <input
-          type="number"
-          step="0.01"
-          min="0.01"
-          required
-          value={amount}
-          onChange={e => setAmount(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-          placeholder="0.00"
-        />
-      </div>
+      <TextField
+        label="Amount ($)"
+        type="number"
+        inputProps={{ step: '0.01', min: '0.01' }}
+        required
+        value={amount}
+        onChange={e => setAmount(e.target.value)}
+      />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Memo (optional)</label>
-        <input
-          type="text"
-          value={memo}
-          onChange={e => setMemo(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-          placeholder="What's this for?"
-        />
-      </div>
+      <TextField
+        label="Memo (optional)"
+        value={memo}
+        onChange={e => setMemo(e.target.value)}
+        placeholder="What's this for?"
+      />
 
-      <button
+      <Button
         type="submit"
+        variant="contained"
+        color="secondary"
+        fullWidth
         disabled={submitting || !fromId}
-        className="w-full bg-violet-600 text-white py-2.5 rounded-lg font-medium hover:bg-violet-700 disabled:opacity-50 transition-colors"
+        size="large"
       >
         {submitting ? 'Sending...' : 'Send Money'}
-      </button>
-    </form>
+      </Button>
+    </Stack>
   );
 }

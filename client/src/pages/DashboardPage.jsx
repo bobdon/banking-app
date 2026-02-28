@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { apiFetch, formatCurrency } from '../lib/api';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import MenuItem from '@mui/material/MenuItem';
+import Paper from '@mui/material/Paper';
+import Grid from '@mui/material/Grid';
+import Stack from '@mui/material/Stack';
+import CircularProgress from '@mui/material/CircularProgress';
+import AddIcon from '@mui/icons-material/Add';
 import AccountCard from '../components/AccountCard';
 
 export default function DashboardPage() {
@@ -18,19 +28,14 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
-
-  async function handleCreateAccount(e) {
+  async function handleCreate(e) {
     e.preventDefault();
     setCreating(true);
     try {
-      const data = await apiFetch('/api/accounts', {
-        body: { name: newName, type: newType },
-      });
+      const data = await apiFetch('/api/accounts', { body: { name: newName, type: newType } });
       setAccounts(prev => [...prev, data.account]);
-      setShowCreate(false);
       setNewName('');
-      setNewType('checking');
+      setShowCreate(false);
     } finally {
       setCreating(false);
     }
@@ -38,78 +43,74 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-16">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-      </div>
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
-  return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Welcome back, {user?.firstName}
-        </h1>
-        <p className="text-gray-500 mt-1">
-          Total balance: <span className="font-semibold text-gray-900">{formatCurrency(totalBalance)}</span>
-        </p>
-      </div>
+  const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
 
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Your Accounts</h2>
-        <button
+  return (
+    <Box>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4">Welcome back, {user?.firstName}</Typography>
+        <Typography variant="body1" color="text.secondary">
+          Total balance: <strong>{formatCurrency(totalBalance)}</strong>
+        </Typography>
+      </Box>
+
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+        <Typography variant="h6">Your Accounts</Typography>
+        <Button
+          size="small"
+          startIcon={<AddIcon />}
           onClick={() => setShowCreate(!showCreate)}
-          className="text-sm text-indigo-600 font-medium hover:text-indigo-500"
         >
-          {showCreate ? 'Cancel' : '+ New Account'}
-        </button>
-      </div>
+          New Account
+        </Button>
+      </Stack>
 
       {showCreate && (
-        <form onSubmit={handleCreateAccount} className="bg-white rounded-xl border border-gray-200 p-6 mb-4 flex gap-4 items-end">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Account name</label>
-            <input
-              type="text"
-              required
+        <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
+          <Stack component="form" onSubmit={handleCreate} direction="row" spacing={2} alignItems="flex-end">
+            <TextField
+              label="Account name"
               value={newName}
               onChange={e => setNewName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              placeholder="e.g., Emergency Fund"
+              required
+              sx={{ flex: 1 }}
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-            <select
+            <TextField
+              select
+              label="Type"
               value={newType}
               onChange={e => setNewType(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              sx={{ minWidth: 140 }}
             >
-              <option value="checking">Checking</option>
-              <option value="savings">Savings</option>
-            </select>
-          </div>
-          <button
-            type="submit"
-            disabled={creating}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 disabled:opacity-50"
-          >
-            Create
-          </button>
-        </form>
+              <MenuItem value="checking">Checking</MenuItem>
+              <MenuItem value="savings">Savings</MenuItem>
+            </TextField>
+            <Button type="submit" variant="contained" disabled={creating}>
+              {creating ? 'Creating...' : 'Create'}
+            </Button>
+          </Stack>
+        </Paper>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {accounts.map(account => (
-          <AccountCard key={account.id} account={account} />
-        ))}
-      </div>
-
-      {accounts.length === 0 && (
-        <div className="text-center py-16 text-gray-400">
-          No accounts yet. Create one to get started.
-        </div>
+      {accounts.length === 0 ? (
+        <Typography variant="body2" color="text.disabled" sx={{ textAlign: 'center', py: 8 }}>
+          No accounts yet. Create one to get started!
+        </Typography>
+      ) : (
+        <Grid container spacing={2}>
+          {accounts.map(account => (
+            <Grid size={{ xs: 12, md: 6 }} key={account.id}>
+              <AccountCard account={account} />
+            </Grid>
+          ))}
+        </Grid>
       )}
-    </div>
+    </Box>
   );
 }

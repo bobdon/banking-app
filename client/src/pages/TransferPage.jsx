@@ -1,14 +1,15 @@
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
 import TransferForm from '../components/TransferForm';
 
 export default function TransferPage() {
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Transfer Funds</h1>
-      <div className="max-w-lg mx-auto">
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <TransferForm />
-        </div>
-      </div>
-    </div>
+    <Box sx={{ maxWidth: 520, mx: 'auto' }}>
+      <Typography variant="h4" sx={{ mb: 3 }}>Transfer</Typography>
+      <Paper variant="outlined" sx={{ p: 3 }}>
+        <TransferForm />
+      </Paper>
+    </Box>
   );
 }
