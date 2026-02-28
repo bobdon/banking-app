@@ -34,6 +34,22 @@ function initSchema(db) {
       created_at             TEXT    NOT NULL DEFAULT (datetime('now'))
     )
   `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS belev_transfers (
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      sender_id           INTEGER NOT NULL REFERENCES users(id),
+      recipient_id        INTEGER NOT NULL REFERENCES users(id),
+      sender_account_id   INTEGER REFERENCES accounts(id),
+      recipient_account_id INTEGER REFERENCES accounts(id),
+      amount              INTEGER NOT NULL,
+      memo                TEXT,
+      type                TEXT    NOT NULL CHECK(type IN ('send', 'request')),
+      status              TEXT    NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'completed', 'declined', 'cancelled')),
+      created_at          TEXT    NOT NULL DEFAULT (datetime('now')),
+      completed_at        TEXT
+    )
+  `);
 }
 
 module.exports = { initSchema };

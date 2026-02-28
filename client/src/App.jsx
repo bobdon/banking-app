@@ -7,6 +7,7 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import AccountPage from './pages/AccountPage';
 import TransferPage from './pages/TransferPage';
+import BeLevPage from './pages/BeLevPage';
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/accounts/:id" element={<AccountPage />} />
             <Route path="/transfer" element={<TransferPage />} />
+            <Route path="/belev" element={<BeLevPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

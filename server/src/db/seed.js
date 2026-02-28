@@ -7,27 +7,27 @@ function generateAccountNumber() {
 async function seed(db) {
   const passwordHash = await bcrypt.hash('password123', 10);
 
+  // ── User 1: Jane Smith ──
   db.run(
     `INSERT INTO users (email, password_hash, first_name, last_name) VALUES (?, ?, ?, ?)`,
     ['jane@example.com', passwordHash, 'Jane', 'Smith']
   );
-
-  const userId = db.exec('SELECT last_insert_rowid() as id')[0].values[0][0];
+  const janeId = db.exec('SELECT last_insert_rowid() as id')[0].values[0][0];
 
   const checkingNum = generateAccountNumber();
   const savingsNum = generateAccountNumber();
 
   db.run(
     `INSERT INTO accounts (user_id, name, type, account_number, balance) VALUES (?, ?, ?, ?, ?)`,
-    [userId, 'Primary Checking', 'checking', checkingNum, 523450]
+    [janeId, 'Primary Checking', 'checking', checkingNum, 523450]
   );
-  const checkingId = db.exec('SELECT last_insert_rowid() as id')[0].values[0][0];
+  const janeCheckingId = db.exec('SELECT last_insert_rowid() as id')[0].values[0][0];
 
   db.run(
     `INSERT INTO accounts (user_id, name, type, account_number, balance) VALUES (?, ?, ?, ?, ?)`,
-    [userId, 'Vacation Savings', 'savings', savingsNum, 1275000]
+    [janeId, 'Vacation Savings', 'savings', savingsNum, 1275000]
   );
-  const savingsId = db.exec('SELECT last_insert_rowid() as id')[0].values[0][0];
+  const janeSavingsId = db.exec('SELECT last_insert_rowid() as id')[0].values[0][0];
 
   const checkingTxns = [
     ['deposit', 250000, 250000, 'Direct Deposit - Employer', '2026-01-15 09:00:00'],
@@ -44,7 +44,7 @@ async function seed(db) {
   for (const [type, amount, balanceAfter, desc, date] of checkingTxns) {
     db.run(
       `INSERT INTO transactions (account_id, type, amount, balance_after, description, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
-      [checkingId, type, amount, balanceAfter, desc, date]
+      [janeCheckingId, type, amount, balanceAfter, desc, date]
     );
   }
 
@@ -60,9 +60,59 @@ async function seed(db) {
   for (const [type, amount, balanceAfter, desc, date] of savingsTxns) {
     db.run(
       `INSERT INTO transactions (account_id, type, amount, balance_after, description, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
-      [savingsId, type, amount, balanceAfter, desc, date]
+      [janeSavingsId, type, amount, balanceAfter, desc, date]
     );
   }
+
+  // ── User 2: Bob Johnson (for BeLev P2P demo) ──
+  db.run(
+    `INSERT INTO users (email, password_hash, first_name, last_name) VALUES (?, ?, ?, ?)`,
+    ['bob@example.com', passwordHash, 'Bob', 'Johnson']
+  );
+  const bobId = db.exec('SELECT last_insert_rowid() as id')[0].values[0][0];
+
+  db.run(
+    `INSERT INTO accounts (user_id, name, type, account_number, balance) VALUES (?, ?, ?, ?, ?)`,
+    [bobId, 'Main Checking', 'checking', generateAccountNumber(), 350000]
+  );
+  const bobCheckingId = db.exec('SELECT last_insert_rowid() as id')[0].values[0][0];
+
+  const bobTxns = [
+    ['deposit', 300000, 300000, 'Direct Deposit - Freelance', '2026-01-20 09:00:00'],
+    ['withdrawal', 5000, 295000, 'Lunch', '2026-01-22 12:30:00'],
+    ['deposit', 100000, 395000, 'Side Project Payment', '2026-02-05 10:00:00'],
+    ['withdrawal', 45000, 350000, 'Internet Bill', '2026-02-12 08:00:00'],
+  ];
+
+  for (const [type, amount, balanceAfter, desc, date] of bobTxns) {
+    db.run(
+      `INSERT INTO transactions (account_id, type, amount, balance_after, description, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+      [bobCheckingId, type, amount, balanceAfter, desc, date]
+    );
+  }
+
+  // ── BeLev P2P Seed Data ──
+
+  // Completed: Jane sent $25 to Bob for lunch
+  db.run(
+    `INSERT INTO belev_transfers (sender_id, recipient_id, sender_account_id, recipient_account_id, amount, memo, type, status, created_at, completed_at)
+     VALUES (?, ?, ?, ?, ?, ?, 'send', 'completed', '2026-02-18 12:00:00', '2026-02-18 12:00:00')`,
+    [janeId, bobId, janeCheckingId, bobCheckingId, 2500, 'Lunch split', ]
+  );
+
+  // Completed: Bob sent $40 to Jane for concert tickets
+  db.run(
+    `INSERT INTO belev_transfers (sender_id, recipient_id, sender_account_id, recipient_account_id, amount, memo, type, status, created_at, completed_at)
+     VALUES (?, ?, ?, ?, ?, ?, 'send', 'completed', '2026-02-22 18:30:00', '2026-02-22 18:30:00')`,
+    [bobId, janeId, bobCheckingId, janeCheckingId, 4000, 'Concert tickets']
+  );
+
+  // Pending: Bob requested $30 from Jane for dinner
+  db.run(
+    `INSERT INTO belev_transfers (sender_id, recipient_id, amount, memo, type, status, created_at)
+     VALUES (?, ?, ?, ?, 'request', 'pending', '2026-02-26 20:00:00')`,
+    [bobId, janeId, 3000, 'Dinner last Friday']
+  );
 }
 
 module.exports = { seed };

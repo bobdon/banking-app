@@ -24,6 +24,17 @@ export default function Layout() {
                 <Link to="/dashboard" className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium">
                   Dashboard
                 </Link>
+                <Link to="/belev" className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium inline-flex items-center gap-1.5">
+                  <svg width="16" height="16" viewBox="0 0 48 48" fill="none">
+                    <rect x="2" y="2" width="44" height="44" rx="12" fill="url(#ng)" />
+                    <path d="M14 34L36 13L24 22L14 34Z" fill="white" />
+                    <path d="M24 22L36 13L16.5 25.5L24 22Z" fill="rgba(255,255,255,0.85)" />
+                    <path d="M14 34L16.5 25.5L24 22L14 34Z" fill="rgba(255,255,255,0.5)" />
+                    <path d="M24 22L27 30L36 13L24 22Z" fill="rgba(255,255,255,0.65)" />
+                    <defs><linearGradient id="ng" x1="0" y1="0" x2="48" y2="48"><stop stopColor="#7c3aed"/><stop offset="1" stopColor="#ec4899"/></linearGradient></defs>
+                  </svg>
+                  BeLev
+                </Link>
                 <Link to="/transfer" className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium">
                   Transfer
                 </Link>
